@@ -20,8 +20,21 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
 export const api = {
   getPaymentConfig: () => fetchJson<PaymentConfig>('/api/payments/config'),
   getPaymentProviders: () => fetchJson<PaymentProvidersResponse>('/api/payments/providers'),
-  getPaymentStatus: (paymentId: string) =>
-    fetchJson<PaymentStatusResponse>(`/api/payments/status/${paymentId}`),
+  getPaymentStatus: ({ paymentId, orderId }: { paymentId?: string; orderId?: string }) => {
+    const params = new URLSearchParams();
+
+    if (orderId) {
+      params.set('order_id', orderId);
+    }
+
+    if (paymentId) {
+      const suffix = params.toString() ? `?${params.toString()}` : '';
+      return fetchJson<PaymentStatusResponse>(`/api/payments/status/${paymentId}${suffix}`);
+    }
+
+    const query = params.toString();
+    return fetchJson<PaymentStatusResponse>(`/api/payments/status${query ? `?${query}` : ''}`);
+  },
   submitLead: (payload: LeadPayload) =>
     fetchJson<{ message: string }>('/api/leads', {
       method: 'POST',

@@ -13,36 +13,51 @@ type PaymentResultPageProps = {
 export function PaymentResultPage({ mode }: PaymentResultPageProps) {
   const [status, setStatus] = useState<PaymentStatusResponse | null>(null);
   const [error, setError] = useState('');
-  const paymentId =
-    new URLSearchParams(window.location.search).get('paymentId') ??
-    sessionStorage.getItem('barmix:lastPaymentId');
+  const searchParams = new URLSearchParams(window.location.search);
+  const paymentId = searchParams.get('paymentId') ?? sessionStorage.getItem('barmix:lastPaymentId');
+  const orderId = searchParams.get('order_id') ?? sessionStorage.getItem('barmix:lastOrderId');
   const courseTitle = sessionStorage.getItem('barmix:lastCourseTitle');
 
   useEffect(() => {
-    if (!paymentId) return;
+    if (!paymentId && !orderId) return;
 
     let active = true;
 
-    api.getPaymentStatus(paymentId)
+    api.getPaymentStatus({
+      paymentId: paymentId ?? undefined,
+      orderId: orderId ?? undefined,
+    })
       .then((response) => {
-        if (active) setStatus(response);
+        if (!active) return;
+
+        setStatus(response);
+
+        if (response.paymentId) {
+          sessionStorage.setItem('barmix:lastPaymentId', response.paymentId);
+        }
+
+        if (response.orderId) {
+          sessionStorage.setItem('barmix:lastOrderId', response.orderId);
+        }
       })
       .catch((requestError) => {
-        if (active) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : 'Не удалось проверить статус платежа.',
-          );
-        }
+        if (!active) return;
+
+        setError(
+          requestError instanceof Error ? requestError.message : 'Не удалось проверить статус платежа.',
+        );
       });
 
     return () => {
       active = false;
     };
-  }, [paymentId]);
+  }, [orderId, paymentId]);
 
-  const isSuccess = mode === 'success' || status?.status === 'CONFIRMED';
+  const normalizedStatus = String(status?.status ?? '').trim().toLowerCase();
+  const isSuccess =
+    mode === 'success' || normalizedStatus === 'confirmed' || normalizedStatus === 'succeeded';
+  const reference = paymentId || status?.paymentId || orderId || status?.orderId;
+
   const title =
     mode === 'fail'
       ? 'Оплата не завершена'
@@ -72,7 +87,7 @@ export function PaymentResultPage({ mode }: PaymentResultPageProps) {
             <p>{text}</p>
 
             <div className="result-card__meta">
-              <span>Номер платежа: {paymentId ?? 'не найден'}</span>
+              <span>Номер заявки: {reference ?? 'не найден'}</span>
               <span>Статус: {status?.status ?? 'ожидаем ответ банка'}</span>
               <span>
                 Сумма: {status?.amount ? formatPrice(status.amount) : 'будет доступна после ответа банка'}
