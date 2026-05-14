@@ -7,6 +7,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import {
+  isTelegramRelayConfigured,
+  sendTelegramRelayNotification,
+} from './notifications/telegram-relay.js';
+import {
   assertTbankConfigured,
   buildTbankToken,
   createTbankPayment,
@@ -28,6 +32,9 @@ const port = Number(process.env.PORT || 4242);
 
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
+const supportEmail = process.env.SUPPORT_EMAIL || 'barmixhub@mail.ru';
+const supportPhone = process.env.SUPPORT_PHONE || '+7 (999) 000-00-00';
+const merchantName = process.env.MERCHANT_NAME || 'BarMix';
 
 const tbankEnv = {
   apiUrl: process.env.TBANK_API_URL || 'https://securepay.tinkoff.ru/v2',
@@ -37,12 +44,19 @@ const tbankEnv = {
   notificationUrl: process.env.TBANK_NOTIFICATION_URL || `${publicBaseUrl}/api/payments/webhook`,
   successUrl: process.env.TBANK_SUCCESS_URL || `${clientUrl}/payment/success`,
   failUrl: process.env.TBANK_FAIL_URL || `${clientUrl}/payment/fail`,
-  supportEmail: process.env.SUPPORT_EMAIL || 'barmixhub@mail.ru',
+  supportEmail,
   sendReceipt: String(process.env.TBANK_SEND_RECEIPT || 'false').trim().toLowerCase() === 'true',
   taxation: process.env.TBANK_TAXATION || 'usn_income',
   vat: process.env.TBANK_VAT || 'none',
   paymentMethod: process.env.TBANK_PAYMENT_METHOD || 'full_prepayment',
   paymentObject: process.env.TBANK_PAYMENT_OBJECT || 'service',
+};
+
+const telegramRelayEnv = {
+  enabled: String(process.env.TELEGRAM_RELAY_ENABLED || 'false').trim().toLowerCase() === 'true',
+  url: process.env.TELEGRAM_RELAY_URL || '',
+  token: process.env.TELEGRAM_RELAY_TOKEN || '',
+  timeoutMs: Number(process.env.TELEGRAM_RELAY_TIMEOUT_MS || 5000),
 };
 
 const courseCatalog = {
@@ -97,6 +111,10 @@ function getValidationError({ name, phone, email }) {
   }
 
   return '';
+}
+
+function getErrorMessage(error, fallback) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function indexOrder(order) {
@@ -186,6 +204,59 @@ async function callTbankState(paymentId) {
   return result;
 }
 
+async function applySuccessfulPaymentSideEffects(order) {
+  if (order.status !== 'succeeded') {
+    return order;
+  }
+
+  if (!isTelegramRelayConfigured(telegramRelayEnv)) {
+    if (order.telegramNotificationSkippedAt) {
+      return order;
+    }
+
+    return {
+      ...order,
+      telegramNotificationSkippedAt: order.telegramNotificationSkippedAt ?? new Date().toISOString(),
+      telegramNotificationSkipReason:
+        order.telegramNotificationSkipReason ?? 'relay_not_configured',
+    };
+  }
+
+  if (order.telegramNotificationSentAt) {
+    return order;
+  }
+
+  try {
+    const delivery = await sendTelegramRelayNotification(order, telegramRelayEnv);
+
+    if (delivery.skipped) {
+      return {
+        ...order,
+        telegramNotificationSkippedAt:
+          order.telegramNotificationSkippedAt ?? new Date().toISOString(),
+        telegramNotificationSkipReason:
+          order.telegramNotificationSkipReason ?? delivery.reason ?? 'skipped',
+      };
+    }
+
+    return {
+      ...order,
+      telegramNotificationSentAt: new Date().toISOString(),
+      telegramNotificationResponse: delivery.raw ?? null,
+      telegramNotificationStatusCode: delivery.statusCode ?? null,
+      telegramNotificationError: null,
+      telegramNotificationFailedAt: null,
+      telegramNotificationSkipReason: null,
+    };
+  } catch (error) {
+    return {
+      ...order,
+      telegramNotificationFailedAt: new Date().toISOString(),
+      telegramNotificationError: getErrorMessage(error, 'Не удалось отправить уведомление в Telegram relay.'),
+    };
+  }
+}
+
 async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
   const normalizedPaymentId = String(paymentId).trim();
   const normalizedOrderId = String(orderId).trim();
@@ -229,6 +300,12 @@ async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
     };
 
     await persistOrder(updatedOrder);
+
+    const finalizedOrder = await applySuccessfulPaymentSideEffects(updatedOrder);
+
+    if (finalizedOrder !== updatedOrder) {
+      await persistOrder(finalizedOrder);
+    }
   }
 
   response.json({
@@ -248,9 +325,9 @@ app.get('/api/health', (_request, response) => {
 app.get('/api/payments/config', (_request, response) => {
   response.json({
     payment_enabled: paymentProviders.some((provider) => provider.available),
-    support_email: process.env.SUPPORT_EMAIL || 'barmixhub@mail.ru',
-    support_phone: process.env.SUPPORT_PHONE || '+7 (999) 000-00-00',
-    merchant_name: process.env.MERCHANT_NAME || 'BarMix',
+    support_email: supportEmail,
+    support_phone: supportPhone,
+    merchant_name: merchantName,
     default_provider: defaultProvider,
   });
 });
@@ -436,10 +513,16 @@ app.post('/api/payments/webhook', async (request, response) => {
 
     await persistOrder(updatedOrder);
 
+    const finalizedOrder = await applySuccessfulPaymentSideEffects(updatedOrder);
+
+    if (finalizedOrder !== updatedOrder) {
+      await persistOrder(finalizedOrder);
+    }
+
     console.log('[payment-webhook:tbank]', {
-      orderId: updatedOrder.orderId,
-      paymentId: updatedOrder.paymentId,
-      status: updatedOrder.status,
+      orderId: finalizedOrder.orderId,
+      paymentId: finalizedOrder.paymentId,
+      status: finalizedOrder.status,
     });
 
     response.type('text/plain').send('OK');

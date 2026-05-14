@@ -41,7 +41,11 @@ export function ReviewsPage() {
         <div className="container reviews-grid">
           {visibleReviews.map((review, index) => (
             <Reveal key={review.name} className="review-card" delay={index * 0.05}>
-              <Star size={18} />
+              <div aria-label="Рейтинг 5 из 5">
+                {Array.from({ length: 5 }).map((_, starIndex) => (
+                  <Star key={`${review.name}-${starIndex}`} size={18} fill="currentColor" />
+                ))}
+              </div>
               <p>{review.text}</p>
               <div className="review-card__author">
                 <strong>{review.name}</strong>

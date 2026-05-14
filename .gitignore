@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+tg-bot/
+.dev.vars
+.dev.vars.*
 
 # Editor directories and files
 .vscode/*

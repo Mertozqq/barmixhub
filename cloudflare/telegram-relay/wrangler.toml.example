@@ -1,0 +1,12 @@
+name = "barmix-telegram-relay"
+main = "src/index.js"
+compatibility_date = "2026-05-13"
+
+[observability]
+enabled = true
+
+# Set secrets with:
+# wrangler secret put RELAY_SHARED_TOKEN
+# wrangler secret put TELEGRAM_BOT_TOKEN
+# wrangler secret put TELEGRAM_CHAT_ID
+# wrangler secret put TELEGRAM_MESSAGE_THREAD_ID

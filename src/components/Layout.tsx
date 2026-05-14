@@ -1,6 +1,5 @@
-import { CreditCard } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
 
@@ -10,10 +9,15 @@ export function Layout({ children }: { children: ReactNode }) {
       <SiteHeader />
       <main>{children}</main>
       <SiteFooter />
-      <Link className="floating-cta" to="/oplata?course=bar-foundation">
-        <CreditCard size={18} />
-        Забронировать место
-      </Link>
+      <a
+        className="floating-cta"
+        href="https://app.barmenschool.site/login"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        <LogIn size={18} />
+        Войти в систему
+      </a>
     </div>
   );
 }

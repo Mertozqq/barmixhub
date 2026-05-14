@@ -1017,17 +1017,15 @@ p {
   border-radius: 18px;
 }
 
-.form-state--error {
-  background: rgba(158, 45, 45, 0.12);
-  border: 1px solid rgba(255, 128, 128, 0.28);
-  color: #4b1111;
-}
+
 
 .contact-card .form-state--error,
-.result-card .form-state--error,
-.page-shell .form-state--error {
+.result-card .form-state--error 
+{
   color: #ffb8b8;
-  background: rgba(158, 45, 45, 0.16);
+  background: linear-gradient(180deg, rgba(158, 45, 45, 0.26), rgba(158, 45, 45, 0.16));
+  border-color: rgba(255, 164, 164, 0.3);
+  box-shadow: none;
 }
 
 .form-state--success {
@@ -1641,4 +1639,12 @@ p {
     padding: 0 14px;
     font-size: 0.92rem;
   }
+}
+
+.form-state--error {
+  background: linear-gradient(180deg, rgba(188, 49, 49, 0.18), rgba(188, 49, 49, 0.12));
+  border: 1px solid rgba(160, 26, 26, 0.34);
+  box-shadow: 0 10px 24px rgba(127, 29, 29, 0.14);
+  color: #651717 !important;
+  font-weight: 600;
 }
