@@ -8,6 +8,16 @@ function jsonResponse(body, init = {}) {
   });
 }
 
+function textResponse(body, init = {}) {
+  return new Response(body, {
+    headers: {
+      'content-type': 'text/plain; charset=utf-8',
+      ...init.headers,
+    },
+    status: init.status ?? 200,
+  });
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -43,28 +53,42 @@ function formatPrice(amountRub) {
     return 'сумма не указана';
   }
 
-  return new Intl.NumberFormat('ru-RU').format(numeric) + ' ₽';
+  return `${new Intl.NumberFormat('ru-RU').format(numeric)} ₽`;
 }
 
-function unauthorized() {
-  return jsonResponse(
-    {
-      ok: false,
-      error: 'unauthorized',
-    },
-    { status: 401 },
+function toTrimmedString(value) {
+  return String(value ?? '').trim();
+}
+
+function getAllowedTelegramIds(env) {
+  return new Set(
+    toTrimmedString(env.ALLOWED_TELEGRAM_IDS)
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
   );
 }
 
-function isAuthorized(request, env) {
+function isRelayAuthorized(request, env) {
   const header = request.headers.get('authorization') || '';
-  const expected = String(env.RELAY_SHARED_TOKEN ?? '').trim();
+  const expected = toTrimmedString(env.RELAY_SHARED_TOKEN);
 
   if (!expected) {
     return false;
   }
 
   return header === `Bearer ${expected}`;
+}
+
+function isTelegramWebhookAuthorized(request, env) {
+  const expected = toTrimmedString(env.TELEGRAM_WEBHOOK_SECRET);
+
+  if (!expected) {
+    return true;
+  }
+
+  const provided = request.headers.get('x-telegram-bot-api-secret-token') || '';
+  return provided === expected;
 }
 
 function validatePayload(payload) {
@@ -82,7 +106,7 @@ function validatePayload(payload) {
     return 'Order payload is required.';
   }
 
-  if (!String(order.orderId ?? '').trim()) {
+  if (!toTrimmedString(order.orderId)) {
     return 'OrderId is required.';
   }
 
@@ -112,33 +136,19 @@ function buildTelegramMessage(payload) {
   return lines.join('\n');
 }
 
-async function sendTelegramMessage(payload, env) {
-  const botToken = String(env.TELEGRAM_BOT_TOKEN ?? '').trim();
-  const chatId = String(env.TELEGRAM_CHAT_ID ?? '').trim();
+async function callTelegramApi(method, payload, env) {
+  const botToken = toTrimmedString(env.TELEGRAM_BOT_TOKEN);
 
-  if (!botToken || !chatId) {
-    throw new Error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID.');
+  if (!botToken) {
+    throw new Error('Missing TELEGRAM_BOT_TOKEN.');
   }
 
-  const messageBody = {
-    chat_id: chatId,
-    text: buildTelegramMessage(payload),
-    parse_mode: 'HTML',
-    disable_web_page_preview: true,
-  };
-
-  const threadId = String(env.TELEGRAM_MESSAGE_THREAD_ID ?? '').trim();
-
-  if (threadId) {
-    messageBody.message_thread_id = Number(threadId);
-  }
-
-  const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+  const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify(messageBody),
+    body: JSON.stringify(payload),
   });
 
   const data = await response.json().catch(() => null);
@@ -151,6 +161,115 @@ async function sendTelegramMessage(payload, env) {
   return data;
 }
 
+async function sendTelegramMessage(chatId, text, env) {
+  return callTelegramApi(
+    'sendMessage',
+    {
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    },
+    env,
+  );
+}
+
+async function notifyAllowedUsers(payload, env) {
+  const allowedIds = [...getAllowedTelegramIds(env)];
+
+  if (!allowedIds.length) {
+    throw new Error('Missing ALLOWED_TELEGRAM_IDS.');
+  }
+
+  const text = buildTelegramMessage(payload);
+  const results = [];
+
+  for (const telegramId of allowedIds) {
+    try {
+      const response = await sendTelegramMessage(telegramId, text, env);
+
+      results.push({
+        telegramId,
+        delivered: true,
+        messageId: response?.result?.message_id ?? null,
+      });
+    } catch (error) {
+      results.push({
+        telegramId,
+        delivered: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  return results;
+}
+
+function getTelegramContext(update) {
+  const message = update?.message ?? update?.edited_message ?? null;
+
+  if (!message) {
+    return null;
+  }
+
+  const chatId = toTrimmedString(message.chat?.id);
+  const userId = toTrimmedString(message.from?.id);
+  const text = toTrimmedString(message.text);
+
+  if (!chatId || !userId) {
+    return null;
+  }
+
+  return {
+    chatId,
+    userId,
+    text,
+  };
+}
+
+async function handleTelegramWebhook(update, env) {
+  const context = getTelegramContext(update);
+
+  if (!context) {
+    return textResponse('OK');
+  }
+
+  const allowedIds = getAllowedTelegramIds(env);
+  const isAllowed = allowedIds.has(context.userId);
+
+  if (context.text === '/start') {
+    const text = isAllowed
+      ? 'Доступ подтвержден. Уведомления о новых оплатах будут приходить в этот чат.'
+      : 'Доступ к этому боту не выдан. Отправьте администратору команду /id, чтобы он добавил ваш Telegram ID в список разрешенных.';
+
+    try {
+      await sendTelegramMessage(context.chatId, text, env);
+    } catch {
+      return textResponse('OK');
+    }
+
+    return textResponse('OK');
+  }
+
+  if (context.text === '/id') {
+    try {
+      await sendTelegramMessage(
+        context.chatId,
+        `Ваш Telegram ID: <code>${escapeHtml(context.userId)}</code>`,
+        env,
+      );
+    } catch {
+      return textResponse('OK');
+    }
+  }
+
+  if (!isAllowed) {
+    return textResponse('OK');
+  }
+
+  return textResponse('OK');
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -159,68 +278,106 @@ export default {
       return jsonResponse({
         ok: true,
         service: 'telegram-relay',
+        allowedUsersCount: [...getAllowedTelegramIds(env)].length,
       });
     }
 
-    if (request.method !== 'POST' || url.pathname !== '/') {
-      return jsonResponse(
-        {
-          ok: false,
-          error: 'not_found',
-        },
-        { status: 404 },
-      );
+    if (request.method === 'POST' && url.pathname === '/notify') {
+      if (!isRelayAuthorized(request, env)) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'unauthorized',
+          },
+          { status: 401 },
+        );
+      }
+
+      let payload;
+
+      try {
+        payload = await request.json();
+      } catch {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'invalid_json',
+          },
+          { status: 400 },
+        );
+      }
+
+      const validationError = validatePayload(payload);
+
+      if (validationError) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'invalid_payload',
+            details: validationError,
+          },
+          { status: 400 },
+        );
+      }
+
+      try {
+        const results = await notifyAllowedUsers(payload, env);
+        const delivered = results.filter((item) => item.delivered).length;
+
+        return jsonResponse({
+          ok: true,
+          event: payload.event,
+          orderId: payload.order.orderId,
+          delivered,
+          total: results.length,
+          results,
+        });
+      } catch (error) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'telegram_send_failed',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          },
+          { status: 502 },
+        );
+      }
     }
 
-    if (!isAuthorized(request, env)) {
-      return unauthorized();
+    if (request.method === 'POST' && url.pathname === '/telegram/webhook') {
+      if (!isTelegramWebhookAuthorized(request, env)) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'unauthorized',
+          },
+          { status: 401 },
+        );
+      }
+
+      let update;
+
+      try {
+        update = await request.json();
+      } catch {
+        return jsonResponse(
+          {
+            ok: false,
+            error: 'invalid_json',
+          },
+          { status: 400 },
+        );
+      }
+
+      return handleTelegramWebhook(update, env);
     }
 
-    let payload;
-
-    try {
-      payload = await request.json();
-    } catch {
-      return jsonResponse(
-        {
-          ok: false,
-          error: 'invalid_json',
-        },
-        { status: 400 },
-      );
-    }
-
-    const validationError = validatePayload(payload);
-
-    if (validationError) {
-      return jsonResponse(
-        {
-          ok: false,
-          error: 'invalid_payload',
-          details: validationError,
-        },
-        { status: 400 },
-      );
-    }
-
-    try {
-      const telegramResponse = await sendTelegramMessage(payload, env);
-
-      return jsonResponse({
-        ok: true,
-        event: payload.event,
-        orderId: payload.order.orderId,
-        telegramMessageId: telegramResponse?.result?.message_id ?? null,
-      });
-    } catch (error) {
-      return jsonResponse(
-        {
-          ok: false,
-          error: 'telegram_send_failed',
-          details: error instanceof Error ? error.message : 'Unknown error',
-        },
-        { status: 502 },
-      );
-    }
+    return jsonResponse(
+      {
+        ok: false,
+        error: 'not_found',
+      },
+      { status: 404 },
+    );
   },
 };

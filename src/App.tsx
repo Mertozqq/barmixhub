@@ -30,6 +30,7 @@ function AppRoutes() {
         <Route path="/privacy" element={<LegalPage type="privacy" />} />
         <Route path="/offer" element={<LegalPage type="offer" />} />
         <Route path="/consent" element={<LegalPage type="consent" />} />
+        <Route path="/mailing-consent" element={<LegalPage type="mailing" />} />
         <Route path="/distribution-consent" element={<LegalPage type="distribution" />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

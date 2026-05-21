@@ -1,6 +1,6 @@
 import { BadgeCheck, CreditCard, Mail, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
 import { SectionEyebrow } from '../components/SectionHeading';
@@ -9,6 +9,12 @@ import { api } from '../lib/api';
 import { formatPrice } from '../lib/format';
 import { validateEmail, validateName, validatePhone } from '../lib/validation';
 import type { PaymentConfig, PaymentFormState, PaymentProvider } from '../types';
+
+const consentDocuments = [
+  { label: 'Согласие на обработку персональных данных', to: '/consent' },
+  { label: 'Согласие на распространение данных', to: '/distribution-consent' },
+  { label: 'Согласие на рассылку', to: '/mailing-consent' },
+];
 
 export function PaymentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,6 +29,8 @@ export function PaymentPage() {
   const [loading, setLoading] = useState(false);
 
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
+  const allAgreementsAccepted =
+    form.privacyAccepted && form.offerAccepted && form.consentsAccepted;
 
   useEffect(() => {
     setSelectedCourseId(initialCourse.id);
@@ -62,7 +70,9 @@ export function PaymentPage() {
       validateName(form.name) ||
       validatePhone(form.phone) ||
       validateEmail(form.email) ||
-      (!form.agreement ? 'Нужно согласие на обработку данных.' : '');
+      (!form.privacyAccepted ? 'Нужно подтвердить ознакомление с политикой конфиденциальности.' : '') ||
+      (!form.offerAccepted ? 'Нужно принять условия договора оферты.' : '') ||
+      (!form.consentsAccepted ? 'Нужно подтвердить все обязательные согласия.' : '');
 
     if (validation) {
       setError(validation);
@@ -255,18 +265,72 @@ export function PaymentPage() {
                 </div>
               </div>
 
-              <label className="checkbox">
-                <input
-                  type="checkbox"
-                  checked={form.agreement}
-                  onChange={(event) => setForm((current) => ({ ...current, agreement: event.target.checked }))}
-                />
-                <span>Я согласен с обработкой персональных данных и условиями участия.</span>
-              </label>
+              <div className="payment-legal">
+                <p className="payment-legal__title">Документы перед оплатой</p>
+
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.privacyAccepted}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, privacyAccepted: event.target.checked }))
+                    }
+                  />
+                  <span>
+                    Я ознакомлен(а) с{' '}
+                    <Link to="/privacy" target="_blank" rel="noreferrer">
+                      политикой конфиденциальности
+                    </Link>
+                    .
+                  </span>
+                </label>
+
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.offerAccepted}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, offerAccepted: event.target.checked }))
+                    }
+                  />
+                  <span>
+                    Я принимаю условия{' '}
+                    <Link to="/offer" target="_blank" rel="noreferrer">
+                      договора оферты
+                    </Link>
+                    .
+                  </span>
+                </label>
+
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.consentsAccepted}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, consentsAccepted: event.target.checked }))
+                    }
+                  />
+                  <span>
+                    Я подтверждаю следующие согласия:{' '}
+                    {consentDocuments.map((document, index) => (
+                      <span key={document.to}>
+                        <Link to={document.to} target="_blank" rel="noreferrer">
+                          {document.label}
+                        </Link>
+                        {index < consentDocuments.length - 1 ? '; ' : '.'}
+                      </span>
+                    ))}
+                  </span>
+                </label>
+              </div>
 
               {error ? <p className="form-state form-state--error">{error}</p> : null}
 
-              <button className="button button--dark payment-form__submit" type="submit" disabled={loading}>
+              <button
+                className="button button--dark payment-form__submit"
+                type="submit"
+                disabled={loading || !allAgreementsAccepted}
+              >
                 {loading ? 'Создаем платеж...' : `Перейти к оплате · ${formatPrice(selectedCourse.price)}`}
               </button>
 

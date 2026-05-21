@@ -34,10 +34,8 @@ export function SiteFooter() {
         <div>
           <p className="site-footer__title">Документы</p>
           <div className="site-footer__links">
-            <Link to="/privacy">Политика</Link>
-            <Link to="/offer">Оферта</Link>
-            <Link to="/consent">Согласие</Link>
-            <Link to="/distribution-consent">Распространение данных</Link>
+            <Link to="/consent">Согласие на обработку персональных данных</Link>
+            <Link to="/offer">Договор оферты</Link>
           </div>
         </div>
 
@@ -56,6 +54,15 @@ export function SiteFooter() {
               <MapPin size={16} />
               Москва / офлайн и онлайн
             </span>
+          </div>
+        </div>
+
+        <div>
+          <p className="site-footer__title">Реквизиты</p>
+          <div className="site-footer__meta">
+            <span>ИП Хуснутдинова Эльвира Фаилевна</span>
+            <span>ИНН: 636923943804</span>
+            <span>ОГРНИП: 326632700080042</span>
           </div>
         </div>
       </div>

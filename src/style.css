@@ -213,6 +213,12 @@ img {
   transform: translateY(-2px);
 }
 
+.button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .button--primary {
   background: linear-gradient(135deg, var(--gold), #f0d78e);
   color: var(--black);
@@ -995,11 +1001,35 @@ p {
   color: var(--charcoal);
 }
 
+.checkbox span {
+  line-height: 1.6;
+}
+
+.checkbox a {
+  color: var(--black);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
 .checkbox input {
   width: 18px;
   height: 18px;
   accent-color: var(--black);
   margin-top: 4px;
+}
+
+.payment-legal {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(31, 41, 55, 0.12);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.payment-legal__title {
+  color: rgba(31, 41, 55, 0.9);
+  font-weight: 700;
 }
 
 .payment-form__submit {
@@ -1017,7 +1047,13 @@ p {
   border-radius: 18px;
 }
 
-
+.form-state--error {
+  background: linear-gradient(180deg, rgba(188, 49, 49, 0.18), rgba(188, 49, 49, 0.12));
+  border: 1px solid rgba(160, 26, 26, 0.34);
+  box-shadow: 0 10px 24px rgba(127, 29, 29, 0.14);
+  color: #651717;
+  font-weight: 600;
+}
 
 .contact-card .form-state--error,
 .result-card .form-state--error 
@@ -1235,7 +1271,7 @@ p {
 
 .site-footer__grid {
   display: grid;
-  grid-template-columns: 1.25fr 0.8fr 0.8fr 1fr;
+  grid-template-columns: 1.2fr 0.85fr 0.95fr 1fr 1fr;
   gap: 24px;
   padding-top: 30px;
   border-top: 1px solid rgba(245, 230, 200, 0.12);

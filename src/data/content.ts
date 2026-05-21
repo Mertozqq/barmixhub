@@ -146,6 +146,8 @@ export const paymentDraft: PaymentFormState = {
   phone: '',
   email: '',
   promo: '',
-  agreement: false,
+  privacyAccepted: false,
+  offerAccepted: false,
+  consentsAccepted: false,
   paymentProvider: 'tbank',
 };

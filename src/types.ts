@@ -41,7 +41,9 @@ export type PaymentFormState = {
   phone: string;
   email: string;
   promo: string;
-  agreement: boolean;
+  privacyAccepted: boolean;
+  offerAccepted: boolean;
+  consentsAccepted: boolean;
   paymentProvider: string;
 };
 

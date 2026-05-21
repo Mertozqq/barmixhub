@@ -1,22 +1,40 @@
 # Telegram Relay Worker
 
-Небольшой `Cloudflare Worker`, который принимает событие от backend BarMix и отправляет уведомление в Telegram.
+Небольшой `Cloudflare Worker`, который принимает событие от backend BarMix и рассылает уведомление только заранее разрешенным Telegram-пользователям.
 
-## Что делает
+## Как устроен доступ
 
-- принимает `POST /`
-- проверяет `Authorization: Bearer <RELAY_SHARED_TOKEN>`
-- ожидает событие `payment.succeeded`
-- отправляет сообщение в Telegram через `sendMessage`
+- список допущенных пользователей задается вручную через `ALLOWED_TELEGRAM_IDS`
+- `/start` никого не добавляет
+- если пользователь не в allowlist, бот отвечает, что доступ не выдан
+- если пользователь в allowlist, бот подтверждает доступ и может получать уведомления
 
-## Секреты Worker
+Важно:
+- даже разрешенный пользователь должен хотя бы один раз открыть бот и нажать `Start`, иначе Telegram не даст боту писать ему первым
 
-Нужно добавить в Cloudflare:
+## Маршруты Worker
+
+- `GET /health`
+- `POST /notify` — вызывается backend сайта после успешной оплаты
+- `POST /telegram/webhook` — webhook от Telegram
+
+## Что нужно задать в Cloudflare
+
+Секреты:
 
 - `RELAY_SHARED_TOKEN`
 - `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
-- `TELEGRAM_MESSAGE_THREAD_ID` — опционально, если используешь тему в группе
+- `TELEGRAM_WEBHOOK_SECRET`
+
+Обычные переменные:
+
+- `ALLOWED_TELEGRAM_IDS`
+
+Пример:
+
+```text
+ALLOWED_TELEGRAM_IDS=123456789,987654321
+```
 
 ## Быстрый деплой
 
@@ -27,10 +45,18 @@
 ```bash
 wrangler secret put RELAY_SHARED_TOKEN
 wrangler secret put TELEGRAM_BOT_TOKEN
-wrangler secret put TELEGRAM_CHAT_ID
+wrangler secret put TELEGRAM_WEBHOOK_SECRET
 ```
 
-4. Задеплой Worker:
+4. Добавь переменную:
+
+```bash
+wrangler secret put ALLOWED_TELEGRAM_IDS
+```
+
+Если хочешь хранить allowlist не как secret, можно задать его обычной переменной в Dashboard.
+
+5. Задеплой Worker:
 
 ```bash
 wrangler deploy
@@ -42,11 +68,24 @@ wrangler deploy
 
 ```env
 TELEGRAM_RELAY_ENABLED=true
-TELEGRAM_RELAY_URL=https://<your-worker>.workers.dev/
+TELEGRAM_RELAY_URL=https://<your-worker>.workers.dev/notify
 TELEGRAM_RELAY_TOKEN=<same RELAY_SHARED_TOKEN>
 ```
 
-## Формат входящего события
+## Подключение Telegram webhook
+
+После деплоя нужно один раз вызвать:
+
+```text
+https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://<your-worker>.workers.dev/telegram/webhook&secret_token=<TELEGRAM_WEBHOOK_SECRET>
+```
+
+## Полезные команды в боте
+
+- `/start` — подтверждение доступа для разрешенного пользователя
+- `/id` — показать свой Telegram ID
+
+## Формат события от backend
 
 ```json
 {
