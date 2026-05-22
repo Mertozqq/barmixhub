@@ -63,7 +63,7 @@ const courseCatalog = {
   'bar-foundation': {
     id: 'bar-foundation',
     title: 'Барный интенсив',
-    priceRub: 39500,
+    priceRub: 34990,
     description:
       'Шестинедельный очный интенсив с погружением в барную среду, сервис и рабочую логику смены.',
   },

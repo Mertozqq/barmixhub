@@ -1,16 +1,15 @@
 import { Menu, X } from 'lucide-react';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { navLinks } from '../data/content';
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
-  const closeMenu = useEffectEvent(() => setMenuOpen(false));
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    closeMenu();
-  }, [location.pathname, closeMenu]);
+    setMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header className="site-header">
@@ -19,7 +18,7 @@ export function SiteHeader() {
           <span className="brand__mark">BM</span>
           <span>
             <strong>BarMix</strong>
-            <small>барное пространство</small>
+            <small>Барное пространство</small>
           </span>
         </Link>
 
@@ -27,17 +26,19 @@ export function SiteHeader() {
           type="button"
           className="menu-button"
           onClick={() => setMenuOpen((current) => !current)}
-          aria-label="Открыть меню"
+          aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={menuOpen}
+          aria-controls="site-nav"
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
-        <nav className={`site-nav ${menuOpen ? 'site-nav--open' : ''}`}>
+        <nav id="site-nav" className={`site-nav ${menuOpen ? 'site-nav--open' : ''}`}>
           {navLinks.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => setMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? 'site-nav__link site-nav__link--active' : 'site-nav__link'
               }
@@ -45,7 +46,11 @@ export function SiteHeader() {
               {item.label}
             </NavLink>
           ))}
-          <Link className="button button--sm button--primary site-nav__cta" to="/oplata?course=bar-foundation">
+          <Link
+            className="button button--sm button--primary site-nav__cta"
+            to="/oplata?course=bar-foundation"
+            onClick={() => setMenuOpen(false)}
+          >
             Записаться
           </Link>
         </nav>
