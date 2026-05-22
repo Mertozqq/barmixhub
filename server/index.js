@@ -33,7 +33,7 @@ const port = Number(process.env.PORT || 4242);
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
 const supportEmail = process.env.SUPPORT_EMAIL || 'barmixhub@mail.ru';
-const supportPhone = process.env.SUPPORT_PHONE || '+7 (999) 000-00-00';
+const supportPhone = process.env.SUPPORT_PHONE || '+7 (917) 252-02-65';
 const merchantName = process.env.MERCHANT_NAME || 'BarMix';
 
 const tbankEnv = {

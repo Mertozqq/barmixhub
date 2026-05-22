@@ -31,7 +31,7 @@ const legalProfile = {
   brand: 'BarMix',
   site: 'https://barmixhub.ru',
   email: 'barmixhub@mail.ru',
-  phone: '+7 (999) 000-00-00',
+  phone: '+7 (917) 252-02-65',
   operator: 'Индивидуальный предприниматель Хуснутдинова Эльвира Фаилевна',
   shortOperator: 'ИП Хуснутдинова Эльвира Фаилевна',
   inn: '636923943804',

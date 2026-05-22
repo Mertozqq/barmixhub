@@ -18,7 +18,7 @@ export function ContactPage() {
               <Phone size={20} />
               <div>
                 <strong>Телефон</strong>
-                <p>+7 (999) 000-00-00</p>
+                <p>+7 (917) 252-02-65</p>
               </div>
             </div>
             <div className="contact-meta__item">

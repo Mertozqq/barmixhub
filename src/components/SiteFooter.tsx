@@ -44,7 +44,7 @@ export function SiteFooter() {
           <div className="site-footer__meta">
             <span>
               <Phone size={16} />
-              +7 (999) 000-00-00
+              +7 (917) 252-02-65
             </span>
             <span>
               <Mail size={16} />
