@@ -34,7 +34,7 @@ const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
 const supportEmail = process.env.SUPPORT_EMAIL || 'barmixhub@mail.ru';
 const supportPhone = process.env.SUPPORT_PHONE || '+7 (917) 252-02-65';
-const merchantName = process.env.MERCHANT_NAME || 'BarMix';
+const merchantName = process.env.MERCHANT_NAME || 'BarMixHub';
 
 const tbankEnv = {
   apiUrl: process.env.TBANK_API_URL || 'https://securepay.tinkoff.ru/v2',
@@ -65,7 +65,7 @@ const courseCatalog = {
     title: 'Барный интенсив',
     priceRub: 34990,
     description:
-      'Шестинедельный очный интенсив с погружением в барную среду, сервис и рабочую логику смены.',
+      'Двухнедельный очный интенсив с погружением в барную среду, сервис и рабочую логику смены.',
   },
 };
 
@@ -538,6 +538,6 @@ hydrateOrders().then(() => {
   console.log(`Hydrated ${ordersByOrderId.size} orders from storage.`);
 
   app.listen(port, () => {
-    console.log(`BarMix backend is listening on http://localhost:${port}`);
+    console.log(`BarMixHub backend is listening on http://localhost:${port}`);
   });
 });

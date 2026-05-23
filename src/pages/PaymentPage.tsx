@@ -335,7 +335,7 @@ export function PaymentPage() {
               </button>
 
               <div className="payment-help">
-                <span>{config?.merchant_name ?? 'BarMix'}</span>
+                <span>{config?.merchant_name ?? 'BarMixHub'}</span>
                 <span>{config?.support_email ?? 'barmixhub@mail.ru'}</span>
                 <span>
                   {config?.payment_enabled === false

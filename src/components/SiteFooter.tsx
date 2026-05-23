@@ -10,12 +10,12 @@ export function SiteFooter() {
           <Link className="brand brand--footer" to="/">
             <span className="brand__mark">BM</span>
             <span>
-              <strong>BarMix</strong>
+              <strong>BarMixHub</strong>
               <small>барное пространство</small>
             </span>
           </Link>
           <p className="site-footer__text">
-            BarMix — пространство барных встреч и интенсивов для тех, кто хочет спокойнее войти в
+            BarMixHub — пространство барных встреч и интенсивов для тех, кто хочет спокойнее войти в
             индустрию и увереннее чувствовать себя в смене.
           </p>
         </div>

@@ -17,7 +17,7 @@ export function SiteHeader() {
         <Link className="brand" to="/">
           <span className="brand__mark">BM</span>
           <span>
-            <strong>BarMix</strong>
+            <strong>BarMixHub</strong>
             <small>Барное пространство</small>
           </span>
         </Link>

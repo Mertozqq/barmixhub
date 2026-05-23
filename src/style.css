@@ -1211,12 +1211,26 @@ p {
 
 .legal-section h3 {
   margin-bottom: 6px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .legal-meta,
 .legal-list {
   display: grid;
   gap: 12px;
+}
+
+.legal-section p,
+.legal-meta p,
+.legal-list,
+.legal-table th,
+.legal-table td,
+.legal-note {
+  font-size: clamp(0.95rem, 0.2vw + 0.9rem, 1.02rem);
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .legal-meta p strong {
@@ -1236,6 +1250,7 @@ p {
 
 .legal-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .legal-table {
@@ -1544,10 +1559,15 @@ p {
   .hero-visual {
     min-height: 420px;
     padding: 12px;
+    display: flex;
+    justify-content: center;
   }
 
   .image-card--hero {
     min-height: 392px;
+    width: 100%;
+    margin-inline: auto;
+    background-position: center center;
   }
 
   .image-card--tall {
@@ -1611,8 +1631,25 @@ p {
     gap: 14px;
   }
 
+  .page-hero__card h1 {
+    font-size: clamp(2.1rem, 10vw, 3rem);
+    line-height: 1.04;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .legal-table {
     min-width: 560px;
+  }
+
+  .legal-card__eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+  }
+
+  .legal-card--header h2,
+  .legal-section h3 {
+    text-wrap: pretty;
   }
 
   .button {
@@ -1660,13 +1697,56 @@ p {
   .feature-card,
   .principle-card,
   .detail-card {
-    padding: 18px;
+    padding: 18px 10px;
   }
 
   .section-eyebrow {
     margin-bottom: 10px;
     font-size: 0.72rem;
     letter-spacing: 0.2em;
+  }
+
+  .legal-document {
+    gap: 16px;
+  }
+
+  .page-hero__card h1 {
+    font-size: clamp(1.75rem, 9.4vw, 2rem);
+    line-height: 1.06;
+  }
+
+  .legal-card__eyebrow {
+    margin-bottom: 10px;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+
+  .legal-card--header h2 {
+    font-size: clamp(1.65rem, 8vw, 2.1rem);
+    line-height: 1.12;
+  }
+
+  .legal-section h3 {
+    font-size: clamp(1.2rem, 6.2vw, 1.45rem);
+    line-height: 1.18;
+  }
+
+  .legal-section p,
+  .legal-meta p,
+  .legal-list,
+  .legal-table th,
+  .legal-table td,
+  .legal-note {
+    font-size: 0.9rem;
+    line-height: 1.62;
+  }
+
+  .legal-list {
+    padding-left: 18px;
+  }
+
+  .legal-table {
+    min-width: 520px;
   }
 
   .hero-copy__actions,

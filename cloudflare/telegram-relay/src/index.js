@@ -117,7 +117,7 @@ function buildTelegramMessage(payload) {
   const order = payload.order ?? {};
   const customer = order.customer ?? {};
   const lines = [
-    'Новая оплата BarMix',
+    'Новая оплата BarMixHub',
     '',
     `<b>Интенсив:</b> ${escapeHtml(order.title || 'Без названия')}`,
     `<b>Сумма:</b> ${escapeHtml(formatPrice(order.amountRub))}`,
