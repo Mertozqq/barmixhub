@@ -1201,6 +1201,10 @@ p {
   align-items: start;
 }
 
+.legal-card--header > * {
+  min-width: 0;
+}
+
 .legal-card__eyebrow {
   color: var(--gold);
   text-transform: uppercase;
@@ -1647,9 +1651,26 @@ p {
     letter-spacing: 0.14em;
   }
 
+  .legal-card--header h2 {
+    font-size: clamp(1.55rem, 7.6vw, 2.2rem);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .legal-card--header h2,
   .legal-section h3 {
     text-wrap: pretty;
+  }
+
+  .legal-meta,
+  .legal-meta p,
+  .legal-section,
+  .legal-section p,
+  .legal-note {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .button {
