@@ -2,6 +2,7 @@ import { CalendarDays, CreditCard } from 'lucide-react';
 import { CourseCard } from '../components/CourseCard';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { SectionHeading } from '../components/SectionHeading';
 import { courses } from '../data/content';
 import { formatPrice } from '../lib/format';
@@ -11,6 +12,11 @@ export function IntensivePage() {
 
   return (
     <>
+      <Seo
+        title="\u0411\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u2014 2 \u043d\u0435\u0434\u0435\u043b\u0438"
+        description="\u041e\u0447\u043d\u044b\u0439 \u0431\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 BarMixHub: 2 \u043d\u0435\u0434\u0435\u043b\u0438, \u0434\u0435\u043c\u043e\u043d\u0441\u0442\u0440\u0430\u0446\u0438\u0438, \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0430, \u0441\u0435\u0440\u0432\u0438\u0441 \u0438 \u0431\u0430\u0437\u043e\u0432\u0430\u044f \u0440\u0430\u0431\u043e\u0447\u0430\u044f \u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u0431\u0430\u0440\u0430."
+        canonicalPath="/intensive"
+      />
       <PageHero
         eyebrow="интенсив"
         title="Текущий интенсив"

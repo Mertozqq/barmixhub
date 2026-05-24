@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { SectionEyebrow } from '../components/SectionHeading';
 import { courses, paymentDraft } from '../data/content';
 import { api } from '../lib/api';
@@ -103,6 +104,12 @@ export function PaymentPage() {
 
   return (
     <>
+      <Seo
+        title="\u041e\u043f\u043b\u0430\u0442\u0430 \u0443\u0447\u0430\u0441\u0442\u0438\u044f"
+        description="\u041e\u043f\u043b\u0430\u0442\u0430 \u0443\u0447\u0430\u0441\u0442\u0438\u044f \u0432 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432\u0435 BarMixHub: \u043a\u0430\u0440\u0442\u044b, \u0421\u0411\u041f, T-Pay \u0438 \u0440\u0430\u0441\u0441\u0440\u043e\u0447\u043a\u0430 \u0447\u0435\u0440\u0435\u0437 T-\u0411\u0430\u043d\u043a."
+        canonicalPath="/oplata"
+        noindex
+      />
       <PageHero
         eyebrow="оплата"
         title="Запись и оплата участия"

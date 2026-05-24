@@ -4,14 +4,44 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CourseCard } from '../components/CourseCard';
 import { FaqCard } from '../components/FaqCard';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { SectionEyebrow, SectionHeading } from '../components/SectionHeading';
 import { courses, curriculum, faqs, highlights, journey, stats } from '../data/content';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'BarMixHub',
+      url: 'https://barmixhub.ru/',
+      email: 'barmixhub@mail.ru',
+      telephone: '+7 (917) 252-02-65',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: '\u0411\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432',
+      serviceType:
+        '\u0418\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u043e\u043d\u043d\u043e-\u043a\u043e\u043d\u0441\u0443\u043b\u044c\u0442\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0435 \u0443\u0441\u043b\u0443\u0433\u0438',
+      provider: {
+        '@type': 'Organization',
+        name: 'BarMixHub',
+        url: 'https://barmixhub.ru/',
+      },
+      areaServed: '\u041c\u043e\u0441\u043a\u0432\u0430',
+    },
+  ];
 
   return (
     <>
+      <Seo
+        title="\u0411\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432 \u0432 \u041c\u043e\u0441\u043a\u0432\u0435"
+        description="BarMixHub \u2014 \u0431\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432: \u0436\u0438\u0432\u044b\u0435 \u0432\u0441\u0442\u0440\u0435\u0447\u0438, \u0441\u0435\u0440\u0432\u0438\u0441, \u0432\u043a\u0443\u0441, \u0440\u0430\u0431\u043e\u0442\u0430 \u0432 \u0441\u043c\u0435\u043d\u0435 \u0438 \u0437\u0430\u043f\u0438\u0441\u044c \u043e\u043d\u043b\u0430\u0439\u043d."
+        canonicalPath="/"
+        structuredData={structuredData}
+      />
       <section className="hero-section">
         <div className="container hero-grid">
           <Reveal className="hero-visual">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { api } from '../lib/api';
 import { formatPrice } from '../lib/format';
 import type { PaymentStatusResponse } from '../types';
@@ -76,6 +77,12 @@ export function PaymentResultPage({ mode }: PaymentResultPageProps) {
 
   return (
     <>
+      <Seo
+        title={title}
+        description={text}
+        canonicalPath={mode === 'fail' ? '/payment/fail' : mode === 'pending' ? '/payment/pending' : '/payment/success'}
+        noindex
+      />
       <PageHero eyebrow="статус оплаты" title={title} text={text} />
       <section className="section">
         <div className="container result-card-wrap">

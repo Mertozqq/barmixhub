@@ -2,6 +2,7 @@ import { Star } from 'lucide-react';
 import { startTransition, useDeferredValue, useState } from 'react';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { reviews } from '../data/content';
 
 export function ReviewsPage() {
@@ -14,6 +15,11 @@ export function ReviewsPage() {
 
   return (
     <>
+      <Seo
+        title="\u041e\u0442\u0437\u044b\u0432\u044b \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432"
+        description="\u041e\u0442\u0437\u044b\u0432\u044b \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 BarMixHub \u043e \u0444\u043e\u0440\u043c\u0430\u0442\u0435, \u0430\u0442\u043c\u043e\u0441\u0444\u0435\u0440\u0435 \u0438 \u043b\u0438\u0447\u043d\u043e\u043c \u043e\u043f\u044b\u0442\u0435 \u043d\u0430 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432\u0435."
+        canonicalPath="/reviews"
+      />
       <PageHero
         eyebrow="отзывы"
         title="Отзывы участников"

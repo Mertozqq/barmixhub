@@ -1,0 +1,11 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#111111"/>
+  <rect x="36" y="36" width="1128" height="558" rx="28" fill="#1A140E" stroke="#D4AF37" stroke-opacity="0.45"/>
+  <circle cx="160" cy="140" r="58" fill="#D4AF37" fill-opacity="0.12"/>
+  <circle cx="1040" cy="500" r="92" fill="#F5E6C8" fill-opacity="0.06"/>
+  <text x="92" y="178" fill="#D4AF37" font-family="Georgia, serif" font-size="54" font-weight="700">BM</text>
+  <text x="92" y="278" fill="#F5E6C8" font-family="Georgia, serif" font-size="96" font-weight="700">BarMixHub</text>
+  <text x="92" y="354" fill="#F5E6C8" font-family="Arial, sans-serif" font-size="34" opacity="0.9">Барный интенсив для новичков в Москве</text>
+  <text x="92" y="418" fill="#F5E6C8" font-family="Arial, sans-serif" font-size="28" opacity="0.72">Живые встречи, сервис, вкус и спокойная работа в смене</text>
+  <text x="92" y="540" fill="#D4AF37" font-family="Arial, sans-serif" font-size="24" letter-spacing="8">BARMIXHUB.RU</text>
+</svg>

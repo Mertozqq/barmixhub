@@ -2,11 +2,17 @@ import { BookOpen, GlassWater, ShieldCheck } from 'lucide-react';
 import { BadgeCheck } from 'lucide-react';
 import { PageHero } from '../components/PageHero';
 import { Reveal } from '../components/Reveal';
+import { Seo } from '../components/Seo';
 import { SectionEyebrow } from '../components/SectionHeading';
 
 export function AboutPage() {
   return (
     <>
+      <Seo
+        title="\u041e \u043f\u0440\u043e\u0435\u043a\u0442\u0435 BarMixHub"
+        description="\u0423\u0437\u043d\u0430\u0439\u0442\u0435 \u043e \u043f\u043e\u0434\u0445\u043e\u0434\u0435 BarMixHub: \u0432\u043a\u0443\u0441, \u0441\u0435\u0440\u0432\u0438\u0441, \u0434\u0438\u0441\u0446\u0438\u043f\u043b\u0438\u043d\u0430 \u0438 \u0441\u043f\u043e\u043a\u043e\u0439\u043d\u044b\u0439 \u0432\u0445\u043e\u0434 \u0432 \u0431\u0430\u0440\u043d\u0443\u044e \u0441\u0440\u0435\u0434\u0443."
+        canonicalPath="/about"
+      />
       <PageHero
         eyebrow="о проекте"
         title="Пространство, в котором в центре стоит реальная смена"

@@ -1,4 +1,5 @@
 import { PageHero } from '../components/PageHero';
+import { Seo } from '../components/Seo';
 import { legalDocuments, type LegalDocumentType } from '../data/legal';
 
 type LegalPageProps = {
@@ -7,9 +8,21 @@ type LegalPageProps = {
 
 export function LegalPage({ type }: LegalPageProps) {
   const document = legalDocuments[type];
+  const canonicalPaths: Record<LegalDocumentType, string> = {
+    privacy: '/privacy',
+    offer: '/offer',
+    consent: '/consent',
+    mailing: '/mailing-consent',
+    distribution: '/distribution-consent',
+  };
 
   return (
     <>
+      <Seo
+        title={document.title}
+        description={document.heroText}
+        canonicalPath={canonicalPaths[type]}
+      />
       <PageHero
         eyebrow="документы"
         title={document.title}
