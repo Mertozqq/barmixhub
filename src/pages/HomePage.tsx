@@ -22,23 +22,23 @@ export function HomePage() {
     {
       '@context': 'https://schema.org',
       '@type': 'Service',
-      name: '\u0411\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432',
+      name: 'Барный интенсив для новичков',
       serviceType:
-        '\u0418\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u043e\u043d\u043d\u043e-\u043a\u043e\u043d\u0441\u0443\u043b\u044c\u0442\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0435 \u0443\u0441\u043b\u0443\u0433\u0438',
+        'Информационно-консультационные услуги',
       provider: {
         '@type': 'Organization',
         name: 'BarMixHub',
         url: 'https://barmixhub.ru/',
       },
-      areaServed: '\u041c\u043e\u0441\u043a\u0432\u0430',
+      areaServed: 'Москва',
     },
   ];
 
   return (
     <>
       <Seo
-        title="\u0411\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432 \u0432 \u041c\u043e\u0441\u043a\u0432\u0435"
-        description="BarMixHub \u2014 \u0431\u0430\u0440\u043d\u044b\u0439 \u0438\u043d\u0442\u0435\u043d\u0441\u0438\u0432 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0447\u043a\u043e\u0432: \u0436\u0438\u0432\u044b\u0435 \u0432\u0441\u0442\u0440\u0435\u0447\u0438, \u0441\u0435\u0440\u0432\u0438\u0441, \u0432\u043a\u0443\u0441, \u0440\u0430\u0431\u043e\u0442\u0430 \u0432 \u0441\u043c\u0435\u043d\u0435 \u0438 \u0437\u0430\u043f\u0438\u0441\u044c \u043e\u043d\u043b\u0430\u0439\u043d."
+        title="Барный интенсив для новичков в Москве"
+        description="BarMixHub — барный интенсив для новичков: живые встречи, сервис, вкус, работа в смене и запись онлайн."
         canonicalPath="/"
         structuredData={structuredData}
       />

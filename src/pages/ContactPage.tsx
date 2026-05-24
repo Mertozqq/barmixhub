@@ -8,7 +8,7 @@ export function ContactPage() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
-    name: '\u041a\u043e\u043d\u0442\u0430\u043a\u0442\u044b BarMixHub',
+    name: 'Контакты BarMixHub',
     url: 'https://barmixhub.ru/contact',
     mainEntity: {
       '@type': 'Organization',
@@ -21,8 +21,8 @@ export function ContactPage() {
   return (
     <>
       <Seo
-        title="\u041a\u043e\u043d\u0442\u0430\u043a\u0442\u044b \u0438 \u043a\u043e\u043d\u0441\u0443\u043b\u044c\u0442\u0430\u0446\u0438\u0438"
-        description="\u0421\u0432\u044f\u0437\u0430\u0442\u044c\u0441\u044f \u0441 BarMixHub: \u0432\u043e\u043f\u0440\u043e\u0441\u044b \u043f\u043e \u0444\u043e\u0440\u043c\u0430\u0442\u0443, \u043e\u043f\u043b\u0430\u0442\u0435, \u0437\u0430\u043f\u0438\u0441\u0438 \u0438 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u043c\u0443 \u043f\u043e\u0442\u043e\u043a\u0443."
+        title="Контакты и консультации"
+        description="Связаться с BarMixHub: вопросы по формату, оплате, записи и ближайшему потоку."
         canonicalPath="/contact"
         structuredData={structuredData}
       />
