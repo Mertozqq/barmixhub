@@ -35,15 +35,15 @@ export function assertTbankConfigured(env) {
     return;
   }
 
-  throw new Error('T-Р‘Р°РЅРє РµС‰Рµ РЅРµ РЅР°СЃС‚СЂРѕРµРЅ: Р·Р°РїРѕР»РЅРёС‚Рµ TBANK_TERMINAL_KEY Рё TBANK_SECRET_KEY.');
+  throw new Error('T-Банк еще не настроен: заполните TBANK_TERMINAL_KEY и TBANK_SECRET_KEY.');
 }
 
 export function getTbankProviderMeta(env) {
   return {
     code: 'tbank',
-    name: 'T-Р‘Р°РЅРє',
-    methods: ['РљР°СЂС‚С‹', 'РЎР‘Рџ', 'T-Pay', 'Р Р°СЃСЃСЂРѕС‡РєР°'],
-    description: 'РћСЃРЅРѕРІРЅРѕР№ РїСЂРѕРІР°Р№РґРµСЂ РґР»СЏ РѕРЅР»Р°Р№РЅ-РѕРїР»Р°С‚С‹ Рё РѕС„РѕСЂРјР»РµРЅРёСЏ СЂР°СЃСЃСЂРѕС‡РєРё.',
+    name: 'T-Банк',
+    methods: ['Карты', 'СБП', 'T-Pay', 'Рассрочка'],
+    description: 'Основной провайдер для онлайн-оплаты и оформления рассрочки.',
     available: isTbankConfigured(env),
   };
 }
@@ -160,10 +160,12 @@ export async function createTbankPayment(order, env) {
   } catch (error) {
     const details =
       error instanceof Error
-        ? [error.message, error.cause instanceof Error ? error.cause.message : ''].filter(Boolean).join(' | ')
-        : 'РќРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР° СЃРµС‚Рё';
+        ? [error.message, error.cause instanceof Error ? error.cause.message : '']
+            .filter(Boolean)
+            .join(' | ')
+        : 'Неизвестная ошибка сети';
 
-    throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ Init-Р·Р°РїСЂРѕСЃ РІ T-Р‘Р°РЅРє: ${details}`);
+    throw new Error(`Не удалось отправить Init-запрос в T-Банк: ${details}`);
   }
 
   let responsePayload;
@@ -171,15 +173,15 @@ export async function createTbankPayment(order, env) {
   try {
     responsePayload = await response.json();
   } catch {
-    throw new Error('T-Р‘Р°РЅРє РІРµСЂРЅСѓР» РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РѕС‚РІРµС‚ РЅР° Init-Р·Р°РїСЂРѕСЃ.');
+    throw new Error('T-Банк вернул некорректный ответ на Init-запрос.');
   }
 
   if (!response.ok) {
-    throw new Error(buildErrorMessage(responsePayload, 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РїР»Р°С‚РµР¶ РІ T-Р‘Р°РЅРєРµ.'));
+    throw new Error(buildErrorMessage(responsePayload, 'Не удалось создать платеж в T-Банке.'));
   }
 
   if (!responsePayload?.Success || !hasValue(responsePayload?.PaymentURL)) {
-    throw new Error(buildErrorMessage(responsePayload, 'T-Р‘Р°РЅРє РЅРµ РІРµСЂРЅСѓР» СЃСЃС‹Р»РєСѓ РЅР° РѕРїР»Р°С‚Сѓ.'));
+    throw new Error(buildErrorMessage(responsePayload, 'T-Банк не вернул ссылку на оплату.'));
   }
 
   return {
