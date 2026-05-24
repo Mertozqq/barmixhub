@@ -181,7 +181,6 @@ async function callTbankState(paymentId) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${tbankEnv.apiToken}`,
     },
     body: JSON.stringify({
       ...payload,
