@@ -18,6 +18,8 @@ export function HomePage() {
       url: 'https://barmixhub.ru/',
       email: 'barmixhub@mail.ru',
       telephone: '+7 (917) 252-02-65',
+      logo: 'https://barmixhub.ru/og-image.png',
+      image: 'https://barmixhub.ru/og-image.png',
     },
     {
       '@context': 'https://schema.org',

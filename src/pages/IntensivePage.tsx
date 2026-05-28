@@ -13,8 +13,8 @@ export function IntensivePage() {
   return (
     <>
       <Seo
-        title="Барный интенсив — 2 недели"
-        description="Очный барный интенсив BarMixHub: 2 недели, демонстрации, практика, сервис и базовая рабочая система бара."
+        title="Барный интенсив — до 2 недель"
+        description="Очный барный интенсив BarMixHub: до 2 недель, демонстрации, практика, сервис и базовая рабочая система бара."
         canonicalPath="/intensive"
       />
       <PageHero

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const SITE_URL = 'https://barmixhub.ru';
-const DEFAULT_IMAGE_URL = `${SITE_URL}/og-image.svg`;
+const DEFAULT_IMAGE_URL = `${SITE_URL}/og-image.png`;
 const DEFAULT_ROBOTS = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1';
 
 type StructuredData = Record<string, unknown> | Array<Record<string, unknown>>;
@@ -75,11 +75,15 @@ export function Seo({
     upsertMeta('property', 'og:description', description);
     upsertMeta('property', 'og:url', canonicalUrl);
     upsertMeta('property', 'og:image', imageUrl);
+    upsertMeta('property', 'og:image:width', '1200');
+    upsertMeta('property', 'og:image:height', '630');
+    upsertMeta('property', 'og:image:alt', fullTitle);
 
     upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertMeta('name', 'twitter:title', fullTitle);
     upsertMeta('name', 'twitter:description', description);
     upsertMeta('name', 'twitter:image', imageUrl);
+    upsertMeta('name', 'twitter:image:alt', fullTitle);
 
     upsertLink('canonical', canonicalUrl);
     upsertLink('alternate', canonicalUrl, { hreflang: 'ru-RU' });
