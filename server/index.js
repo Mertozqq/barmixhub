@@ -63,7 +63,7 @@ const courseCatalog = {
   'bar-foundation': {
     id: 'bar-foundation',
     title: 'Барный интенсив',
-    priceRub: 39990,
+    priceRub: 34990,
     description:
       'Интенсив до 2 недель с погружением в барную среду, сервис и рабочую логику смены.',
   },
