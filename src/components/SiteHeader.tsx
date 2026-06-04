@@ -8,6 +8,17 @@ export function SiteHeader() {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    const userAgent = navigator.userAgent || '';
+    const isTelegramWebView = /Telegram/i.test(userAgent);
+
+    document.documentElement.classList.toggle('is-telegram-webview', isTelegramWebView);
+
+    return () => {
+      document.documentElement.classList.remove('is-telegram-webview');
+    };
+  }, []);
+
+  useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
 

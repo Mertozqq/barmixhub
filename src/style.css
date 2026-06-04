@@ -116,6 +116,11 @@ img {
   border-bottom: 1px solid rgba(245, 230, 200, 0.08);
 }
 
+.is-telegram-webview .site-header {
+  position: relative;
+  top: auto;
+}
+
 .site-header__inner {
   position: relative;
   display: flex;
