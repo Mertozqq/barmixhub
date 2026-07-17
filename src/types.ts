@@ -27,6 +27,7 @@ export type PaymentProvider = {
   name: string;
   methods: string[];
   description: string;
+  available?: boolean;
 };
 
 export type LeadPayload = {

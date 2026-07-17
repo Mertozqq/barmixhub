@@ -19,6 +19,20 @@ import {
   normalizeWebhook as normalizeTbankWebhook,
   validateWebhookToken as validateTbankWebhookToken,
 } from './payments/tbank.js';
+import {
+  assertYandexPayConfigured,
+  createYandexPayOrder,
+  getYandexPayOrderState,
+  getYandexPayProviderMeta,
+  mapYandexPayStatus,
+  normalizeYandexPayWebhook,
+  verifyYandexPayWebhook,
+} from './payments/yandexpay.js';
+import {
+  assertInpocketConfigured,
+  getInpocketPaymentUrl,
+  getInpocketProviderMeta,
+} from './payments/inpocket.js';
 
 dotenv.config();
 
@@ -52,6 +66,24 @@ const tbankEnv = {
   paymentObject: process.env.TBANK_PAYMENT_OBJECT || 'service',
 };
 
+const yandexPayEnv = {
+  apiUrl: (process.env.YANDEX_PAY_API_URL || 'https://pay.yandex.ru').replace(/\/+$/, ''),
+  apiKey: process.env.YANDEX_PAY_API_KEY || '',
+  merchantId: process.env.YANDEX_PAY_MERCHANT_ID || '',
+  paymentMethods: String(process.env.YANDEX_PAY_PAYMENT_METHODS || 'SPLIT')
+    .split(',')
+    .map((method) => method.trim().toUpperCase())
+    .filter(Boolean),
+  ttlSeconds: Number(process.env.YANDEX_PAY_TTL_SECONDS || 1800),
+  successUrl: process.env.YANDEX_PAY_SUCCESS_URL || `${clientUrl}/payment/success`,
+  failUrl: process.env.YANDEX_PAY_FAIL_URL || `${clientUrl}/payment/fail`,
+};
+
+const inpocketEnv = {
+  enabled: String(process.env.INPOCKET_ENABLED || 'true').trim().toLowerCase() === 'true',
+  url: process.env.INPOCKET_URL || 'https://cabinet.inpocket.ru/auth/login',
+};
+
 const telegramRelayEnv = {
   enabled: String(process.env.TELEGRAM_RELAY_ENABLED || 'false').trim().toLowerCase() === 'true',
   url: process.env.TELEGRAM_RELAY_URL || '',
@@ -69,7 +101,11 @@ const courseCatalog = {
   },
 };
 
-const paymentProviders = [getTbankProviderMeta(tbankEnv)];
+const paymentProviders = [
+  getTbankProviderMeta(tbankEnv),
+  getYandexPayProviderMeta(yandexPayEnv),
+  getInpocketProviderMeta(inpocketEnv),
+];
 const defaultProvider = paymentProviders.find((provider) => provider.available)?.code || 'tbank';
 
 const ordersByOrderId = new Map();
@@ -256,6 +292,39 @@ async function applySuccessfulPaymentSideEffects(order) {
   }
 }
 
+function sendStoredOrderStatus(response, knownOrder, fallbackOrderId) {
+  response.json({
+    success: true,
+    paymentId: knownOrder?.paymentId || '',
+    orderId: knownOrder?.orderId || fallbackOrderId,
+    status: knownOrder?.status || 'pending',
+    amount: knownOrder?.amountRub,
+    paymentUrl: knownOrder?.paymentUrl || null,
+  });
+}
+
+async function refreshOrderStatus(knownOrder, patch) {
+  const updatedOrder = {
+    ...knownOrder,
+    ...patch,
+    paymentDetails: {
+      ...(knownOrder.paymentDetails ?? {}),
+      ...(patch.paymentDetails ?? {}),
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  await persistOrder(updatedOrder);
+
+  const finalizedOrder = await applySuccessfulPaymentSideEffects(updatedOrder);
+
+  if (finalizedOrder !== updatedOrder) {
+    await persistOrder(finalizedOrder);
+  }
+
+  return finalizedOrder;
+}
+
 async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
   const normalizedPaymentId = String(paymentId).trim();
   const normalizedOrderId = String(orderId).trim();
@@ -270,15 +339,32 @@ async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
     orderId: normalizedOrderId,
   });
 
-  if (!normalizedPaymentId) {
+  const provider = knownOrder?.paymentProvider || (normalizedPaymentId ? 'tbank' : '');
+
+  if (provider === 'yandex-split') {
+    assertYandexPayConfigured(yandexPayEnv);
+
+    const yandexOrder = await getYandexPayOrderState(knownOrder.orderId, yandexPayEnv);
+    const mappedStatus = mapYandexPayStatus(yandexOrder?.paymentStatus);
+
+    await refreshOrderStatus(knownOrder, {
+      status: mappedStatus,
+      paymentDetails: { lastStateResponse: yandexOrder },
+    });
+
     response.json({
       success: true,
-      paymentId: knownOrder?.paymentId || '',
-      orderId: knownOrder?.orderId || normalizedOrderId,
-      status: knownOrder?.status || 'pending',
-      amount: knownOrder?.amountRub,
-      paymentUrl: knownOrder?.paymentUrl || null,
+      paymentId: knownOrder.paymentId || knownOrder.orderId,
+      orderId: knownOrder.orderId,
+      status: yandexOrder?.paymentStatus || mappedStatus,
+      amount: knownOrder.amountRub,
+      paymentUrl: yandexOrder?.paymentUrl || knownOrder.paymentUrl || null,
     });
+    return;
+  }
+
+  if (provider === 'inpocket' || !normalizedPaymentId) {
+    sendStoredOrderStatus(response, knownOrder, normalizedOrderId);
     return;
   }
 
@@ -287,24 +373,11 @@ async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
   const mappedStatus = mapTbankStatus(bankState.Status, bankState.Success === true);
 
   if (knownOrder) {
-    const updatedOrder = {
-      ...knownOrder,
+    await refreshOrderStatus(knownOrder, {
       paymentId: normalizedPaymentId,
       status: mappedStatus,
-      paymentDetails: {
-        ...(knownOrder.paymentDetails ?? {}),
-        lastStateResponse: bankState,
-      },
-      updatedAt: new Date().toISOString(),
-    };
-
-    await persistOrder(updatedOrder);
-
-    const finalizedOrder = await applySuccessfulPaymentSideEffects(updatedOrder);
-
-    if (finalizedOrder !== updatedOrder) {
-      await persistOrder(finalizedOrder);
-    }
+      paymentDetails: { lastStateResponse: bankState },
+    });
   }
 
   response.json({
@@ -334,11 +407,12 @@ app.get('/api/payments/config', (_request, response) => {
 app.get('/api/payments/providers', (_request, response) => {
   response.json({
     default_provider: defaultProvider,
-    providers: paymentProviders.map(({ code, name, methods, description }) => ({
+    providers: paymentProviders.map(({ code, name, methods, description, available }) => ({
       code,
       name,
       methods,
       description,
+      available,
     })),
   });
 });
@@ -378,10 +452,10 @@ app.post('/api/leads', (request, response) => {
   });
 });
 
+const supportedProviders = new Set(['tbank', 'yandex-split', 'inpocket']);
+
 app.post('/api/payments/create', async (request, response) => {
   try {
-    assertTbankConfigured(tbankEnv);
-
     const {
       courseId,
       name = '',
@@ -391,8 +465,15 @@ app.post('/api/payments/create', async (request, response) => {
       paymentProvider = defaultProvider,
     } = request.body ?? {};
 
-    if (paymentProvider !== 'tbank') {
-      response.status(400).json({ error: 'Сейчас подключен только T-Банк.' });
+    if (!supportedProviders.has(paymentProvider)) {
+      response.status(400).json({ error: 'Выбранный способ оплаты не поддерживается.' });
+      return;
+    }
+
+    const providerMeta = paymentProviders.find((provider) => provider.code === paymentProvider);
+
+    if (!providerMeta?.available) {
+      response.status(400).json({ error: 'Этот способ оплаты временно недоступен.' });
       return;
     }
 
@@ -421,7 +502,7 @@ app.post('/api/payments/create', async (request, response) => {
       phone: String(phone).trim(),
       email: String(email).trim(),
       promo: String(promo).trim().toUpperCase(),
-      paymentProvider: 'tbank',
+      paymentProvider,
       paymentId: '',
       paymentUrl: '',
       status: 'pending',
@@ -429,20 +510,62 @@ app.post('/api/payments/create', async (request, response) => {
       paymentDetails: null,
     };
 
-    const payment = await createTbankPayment(order, tbankEnv);
+    let persistedOrder;
 
-    const persistedOrder = {
-      ...order,
-      paymentId: payment.paymentId,
-      paymentUrl: payment.paymentUrl,
-      status: mapTbankStatus(payment.status, false),
-      paymentDetails: {
-        gateway: 'tbank',
-        initRequest: payment.requestPayload,
-        initResponse: payment.raw,
-        tokenDebug: payment.tokenDebug,
-      },
-    };
+    if (paymentProvider === 'tbank') {
+      assertTbankConfigured(tbankEnv);
+
+      const payment = await createTbankPayment(order, tbankEnv);
+
+      persistedOrder = {
+        ...order,
+        paymentId: payment.paymentId,
+        paymentUrl: payment.paymentUrl,
+        status: mapTbankStatus(payment.status, false),
+        paymentDetails: {
+          gateway: 'tbank',
+          initRequest: payment.requestPayload,
+          initResponse: payment.raw,
+          tokenDebug: payment.tokenDebug,
+        },
+      };
+    } else if (paymentProvider === 'yandex-split') {
+      assertYandexPayConfigured(yandexPayEnv);
+
+      const payment = await createYandexPayOrder(order, yandexPayEnv);
+
+      persistedOrder = {
+        ...order,
+        paymentId: order.orderId,
+        paymentUrl: payment.paymentUrl,
+        status: 'pending',
+        paymentDetails: {
+          gateway: 'yandex-split',
+          initRequest: payment.requestPayload,
+          initResponse: payment.raw,
+        },
+      };
+    } else {
+      assertInpocketConfigured(inpocketEnv);
+
+      persistedOrder = {
+        ...order,
+        paymentUrl: getInpocketPaymentUrl(inpocketEnv),
+        status: 'pending',
+        paymentDetails: {
+          gateway: 'inpocket',
+          note: 'Рассрочка оформляется вручную в кабинете Inpocket, статус обновляется вручную.',
+        },
+      };
+
+      console.log('[payment-request:inpocket]', {
+        orderId: persistedOrder.orderId,
+        name: persistedOrder.name,
+        phone: persistedOrder.phone,
+        email: persistedOrder.email,
+        amountRub: persistedOrder.amountRub,
+      });
+    }
 
     await persistOrder(persistedOrder);
 
@@ -532,6 +655,49 @@ app.post('/api/payments/webhook', async (request, response) => {
     });
   }
 });
+
+app.post(
+  '/api/payments/yandex/webhook',
+  express.raw({ type: () => true, limit: '64kb' }),
+  async (request, response) => {
+    try {
+      assertYandexPayConfigured(yandexPayEnv);
+
+      const payload = await verifyYandexPayWebhook(request.body, yandexPayEnv);
+      const webhook = normalizeYandexPayWebhook(payload);
+
+      if (webhook.event !== 'ORDER_STATUS_UPDATED' || !webhook.orderId) {
+        response.json({ status: 'success' });
+        return;
+      }
+
+      const existingOrder = findOrder({ orderId: webhook.orderId });
+
+      if (!existingOrder || existingOrder.paymentProvider !== 'yandex-split') {
+        response.status(404).json({ error: 'Заказ для webhook Яндекс Пэй не найден.' });
+        return;
+      }
+
+      const finalizedOrder = await refreshOrderStatus(existingOrder, {
+        status: mapYandexPayStatus(webhook.paymentStatus),
+        webhookReceivedAt: new Date().toISOString(),
+        paymentDetails: { lastWebhook: webhook.raw },
+      });
+
+      console.log('[payment-webhook:yandex]', {
+        orderId: finalizedOrder.orderId,
+        status: finalizedOrder.status,
+      });
+
+      response.json({ status: 'success' });
+    } catch (error) {
+      console.error('Yandex Pay webhook processing failed:', error);
+      response.status(400).json({
+        error: error instanceof Error ? error.message : 'Не удалось обработать webhook Яндекс Пэй.',
+      });
+    }
+  },
+);
 
 hydrateOrders().then(() => {
   console.log(`Hydrated ${ordersByOrderId.size} orders from storage.`);

@@ -17,6 +17,29 @@ const consentDocuments = [
   { label: 'Согласие на рассылку', to: '/mailing-consent' },
 ];
 
+const fallbackProviders: PaymentProvider[] = [
+  {
+    code: 'tbank',
+    name: 'T-Банк',
+    methods: ['Карты', 'СБП', 'T-Pay', 'Рассрочка'],
+    description: 'Провайдер по умолчанию',
+  },
+  {
+    code: 'yandex-split',
+    name: 'Яндекс Сплит',
+    methods: ['Оплата частями'],
+    description: 'Оплата частями через Яндекс Сплит',
+  },
+  {
+    code: 'inpocket',
+    name: 'Inpocket',
+    methods: ['Рассрочка'],
+    description: 'Оформление рассрочки в кабинете Inpocket',
+  },
+];
+
+const installmentProviders = new Set(['yandex-split', 'inpocket']);
+
 export function PaymentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCourseId = searchParams.get('course') ?? courses[0].id;
@@ -27,6 +50,7 @@ export function PaymentPage() {
   const [config, setConfig] = useState<PaymentConfig | null>(null);
   const [providers, setProviders] = useState<PaymentProvider[]>([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0];
@@ -66,6 +90,7 @@ export function PaymentPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setSuccess('');
 
     const validation =
       validateName(form.name) ||
@@ -82,6 +107,11 @@ export function PaymentPage() {
 
     setLoading(true);
 
+    const isInpocket = form.paymentProvider === 'inpocket';
+    // Открываем вкладку синхронно по клику, чтобы браузер не заблокировал popup,
+    // и подставляем адрес после ответа сервера.
+    const externalWindow = isInpocket ? window.open('about:blank', '_blank') : null;
+
     try {
       const response = await api.createPayment({
         courseId: selectedCourse.id,
@@ -95,8 +125,24 @@ export function PaymentPage() {
       sessionStorage.setItem('barmix:lastPaymentId', response.paymentId);
       sessionStorage.setItem('barmix:lastOrderId', response.orderId);
       sessionStorage.setItem('barmix:lastCourseTitle', selectedCourse.title);
+
+      if (isInpocket) {
+        if (externalWindow) {
+          externalWindow.location.href = response.paymentUrl;
+        } else {
+          window.open(response.paymentUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        setLoading(false);
+        setSuccess(
+          'Заявка отправлена, кабинет Inpocket открыт в новой вкладке. Мы свяжемся с вами для подтверждения участия.',
+        );
+        return;
+      }
+
       window.location.assign(response.paymentUrl);
     } catch (paymentError) {
+      externalWindow?.close();
       setError(paymentError instanceof Error ? paymentError.message : 'Не удалось создать платеж.');
       setLoading(false);
     }
@@ -106,7 +152,7 @@ export function PaymentPage() {
     <>
       <Seo
         title="Оплата участия"
-        description="Оплата участия в интенсиве BarMixHub: карты, СБП, T-Pay и рассрочка через T-Банк."
+        description="Оплата участия в интенсиве BarMixHub: карты, СБП, T-Pay, рассрочка через T-Банк, Яндекс Сплит и Inpocket."
         canonicalPath="/oplata"
         noindex
       />
@@ -244,31 +290,32 @@ export function PaymentPage() {
               <div className="provider-list">
                 <span className="provider-list__label">Способ оплаты</span>
                 <div className="provider-list__items">
-                  {(providers.length
-                    ? providers
-                    : [
-                        {
-                          code: 'tbank',
-                          name: 'T-Банк',
-                          methods: ['Карты', 'СБП', 'T-Pay', 'Рассрочка'],
-                          description: 'Провайдер по умолчанию',
-                        },
-                      ]
-                  ).map((provider) => (
-                    <button
-                      key={provider.code}
-                      type="button"
-                      className={
-                        provider.code === form.paymentProvider
-                          ? 'provider-chip provider-chip--active'
-                          : 'provider-chip'
-                      }
-                      onClick={() => setForm((current) => ({ ...current, paymentProvider: provider.code }))}
-                    >
-                      <strong>{provider.name}</strong>
-                      <small>{provider.methods.join(' / ')}</small>
-                    </button>
-                  ))}
+                  {(providers.length ? providers : fallbackProviders).map((provider) => {
+                    const isDisabled = provider.available === false;
+                    const isActive = provider.code === form.paymentProvider;
+
+                    return (
+                      <button
+                        key={provider.code}
+                        type="button"
+                        disabled={isDisabled}
+                        title={isDisabled ? 'Способ оплаты временно недоступен' : undefined}
+                        className={[
+                          'provider-chip',
+                          isActive ? 'provider-chip--active' : '',
+                          isDisabled ? 'provider-chip--disabled' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() =>
+                          setForm((current) => ({ ...current, paymentProvider: provider.code }))
+                        }
+                      >
+                        <strong>{provider.name}</strong>
+                        <small>{isDisabled ? 'временно недоступно' : provider.methods.join(' / ')}</small>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -332,14 +379,34 @@ export function PaymentPage() {
               </div>
 
               {error ? <p className="form-state form-state--error">{error}</p> : null}
+              {success ? (
+                <p className="form-state form-state--success">
+                  {success}{' '}
+                  <a href="https://cabinet.inpocket.ru/auth/login" target="_blank" rel="noreferrer">
+                    Открыть кабинет Inpocket
+                  </a>
+                  , если вкладка не открылась.
+                </p>
+              ) : null}
 
               <button
                 className="button button--dark payment-form__submit"
                 type="submit"
                 disabled={loading || !allAgreementsAccepted}
               >
-                {loading ? 'Создаем платеж...' : `Перейти к оплате · ${formatPrice(selectedCourse.price)}`}
+                {loading
+                  ? 'Создаем заявку...'
+                  : installmentProviders.has(form.paymentProvider)
+                    ? `Оформить рассрочку · ${formatPrice(selectedCourse.price)}`
+                    : `Перейти к оплате · ${formatPrice(selectedCourse.price)}`}
               </button>
+
+              {form.paymentProvider === 'inpocket' ? (
+                <p className="payment-form__hint">
+                  После отправки заявки вы перейдете в личный кабинет Inpocket, где оформляется
+                  рассрочка. Мы получим вашу заявку и свяжемся с вами для подтверждения участия.
+                </p>
+              ) : null}
 
               <div className="payment-help">
                 <span>{config?.merchant_name ?? 'BarMixHub'}</span>
