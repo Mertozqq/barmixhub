@@ -25,3 +25,6 @@ tg-bot/
 *.njsproj
 *.sln
 *.sw?
+
+# Orders storage (runtime data, never commit)
+server/storage/
