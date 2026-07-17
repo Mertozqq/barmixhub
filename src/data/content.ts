@@ -1,5 +1,7 @@
 import type { Course, FaqItem, PaymentFormState, Review } from '../types';
 
+const coursePriceRub = Number(import.meta.env.VITE_COURSE_PRICE_RUB || 39990);
+
 export const navLinks = [
   { label: 'Главная', to: '/' },
   { label: 'Интенсив', to: '/intensive' },
@@ -15,7 +17,7 @@ export const courses: Course[] = [
     title: 'Барный интенсив',
     format: 'Очные встречи с демонстрациями',
     duration: 'до 2 недель',
-    price: 39990,
+    price: coursePriceRub,
     audience:
       'Для тех, кто хочет спокойно войти в барную среду, разобраться в базовых техниках, сервисе и логике смены.',
     summary:

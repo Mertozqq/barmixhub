@@ -91,11 +91,13 @@ const telegramRelayEnv = {
   timeoutMs: Number(process.env.TELEGRAM_RELAY_TIMEOUT_MS || 5000),
 };
 
+const coursePriceRub = Number(process.env.COURSE_PRICE_RUB || 39990);
+
 const courseCatalog = {
   'bar-foundation': {
     id: 'bar-foundation',
     title: 'Барный интенсив',
-    priceRub: 39990,
+    priceRub: coursePriceRub,
     description:
       'Интенсив до 2 недель с погружением в барную среду, сервис и рабочую логику смены.',
   },
