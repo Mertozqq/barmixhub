@@ -31,6 +31,12 @@ const fallbackProviders: PaymentProvider[] = [
     description: 'Оплата частями через Яндекс Сплит',
   },
   {
+    code: 'podeli',
+    name: 'Подели',
+    methods: ['Оплата частями', 'Альфа-Банк'],
+    description: 'Оплата частями через Подели от Альфа-Банка',
+  },
+  {
     code: 'inpocket',
     name: 'Inpocket',
     methods: ['Рассрочка'],
@@ -38,7 +44,7 @@ const fallbackProviders: PaymentProvider[] = [
   },
 ];
 
-const installmentProviders = new Set(['yandex-split', 'inpocket']);
+const installmentProviders = new Set(['yandex-split', 'podeli', 'inpocket']);
 
 export function PaymentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -152,7 +158,7 @@ export function PaymentPage() {
     <>
       <Seo
         title="Оплата участия"
-        description="Оплата участия в интенсиве BarMixHub: карты, СБП, T-Pay, рассрочка через T-Банк, Яндекс Сплит и Inpocket."
+        description="Оплата участия в интенсиве BarMixHub: карты, СБП, T-Pay, рассрочка через T-Банк, Яндекс Сплит, Подели (Альфа-Банк) и Inpocket."
         canonicalPath="/oplata"
         noindex
       />

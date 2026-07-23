@@ -33,6 +33,17 @@ import {
   getInpocketPaymentUrl,
   getInpocketProviderMeta,
 } from './payments/inpocket.js';
+import {
+  assertPodeliConfigured,
+  commitPodeliOrder,
+  createPodeliOrder,
+  extractPodeliOrderStatus,
+  getPodeliOrderInfo,
+  getPodeliProviderMeta,
+  mapPodeliStatus,
+  normalizePodeliWebhook,
+  validatePodeliWebhookToken,
+} from './payments/podeli.js';
 
 dotenv.config();
 
@@ -79,6 +90,21 @@ const yandexPayEnv = {
   failUrl: process.env.YANDEX_PAY_FAIL_URL || `${clientUrl}/payment/fail`,
 };
 
+const podeliEnv = {
+  enabled: String(process.env.PODELI_ENABLED || 'true').trim().toLowerCase() === 'true',
+  apiUrl: (process.env.PODELI_API_URL || 'https://api-sand.podeli.ru/partners/v1').replace(/\/+$/, ''),
+  login: process.env.PODELI_LOGIN || '',
+  password: process.env.PODELI_PASSWORD || '',
+  webhookToken: process.env.PODELI_WEBHOOK_TOKEN || '',
+  twoStagePayment:
+    String(process.env.PODELI_TWO_STAGE_PAYMENT || 'false').trim().toLowerCase() === 'true',
+  autoCommit: String(process.env.PODELI_AUTO_COMMIT || 'true').trim().toLowerCase() === 'true',
+  notificationUrl:
+    process.env.PODELI_NOTIFICATION_URL || `${publicBaseUrl}/api/payments/podeli/webhook`,
+  successUrl: process.env.PODELI_SUCCESS_URL || `${clientUrl}/payment/success`,
+  failUrl: process.env.PODELI_FAIL_URL || `${clientUrl}/payment/fail`,
+};
+
 const inpocketEnv = {
   enabled: String(process.env.INPOCKET_ENABLED || 'true').trim().toLowerCase() === 'true',
   url: process.env.INPOCKET_URL || 'https://cabinet.inpocket.ru/auth/login',
@@ -106,6 +132,7 @@ const courseCatalog = {
 const paymentProviders = [
   getTbankProviderMeta(tbankEnv),
   getYandexPayProviderMeta(yandexPayEnv),
+  getPodeliProviderMeta(podeliEnv),
   getInpocketProviderMeta(inpocketEnv),
 ];
 const defaultProvider = paymentProviders.find((provider) => provider.available)?.code || 'tbank';
@@ -365,6 +392,29 @@ async function sendPaymentStatus(response, { paymentId = '', orderId = '' }) {
     return;
   }
 
+  if (provider === 'podeli') {
+    assertPodeliConfigured(podeliEnv);
+
+    const podeliOrder = await getPodeliOrderInfo(knownOrder.orderId, podeliEnv);
+    const podeliStatus = extractPodeliOrderStatus(podeliOrder);
+    const mappedStatus = mapPodeliStatus(podeliStatus);
+
+    await refreshOrderStatus(knownOrder, {
+      status: mappedStatus,
+      paymentDetails: { lastStateResponse: podeliOrder },
+    });
+
+    response.json({
+      success: true,
+      paymentId: knownOrder.paymentId || knownOrder.orderId,
+      orderId: knownOrder.orderId,
+      status: podeliStatus || mappedStatus,
+      amount: knownOrder.amountRub,
+      paymentUrl: knownOrder.paymentUrl || null,
+    });
+    return;
+  }
+
   if (provider === 'inpocket' || !normalizedPaymentId) {
     sendStoredOrderStatus(response, knownOrder, normalizedOrderId);
     return;
@@ -454,7 +504,7 @@ app.post('/api/leads', (request, response) => {
   });
 });
 
-const supportedProviders = new Set(['tbank', 'yandex-split', 'inpocket']);
+const supportedProviders = new Set(['tbank', 'yandex-split', 'podeli', 'inpocket']);
 
 app.post('/api/payments/create', async (request, response) => {
   try {
@@ -543,6 +593,22 @@ app.post('/api/payments/create', async (request, response) => {
         status: 'pending',
         paymentDetails: {
           gateway: 'yandex-split',
+          initRequest: payment.requestPayload,
+          initResponse: payment.raw,
+        },
+      };
+    } else if (paymentProvider === 'podeli') {
+      assertPodeliConfigured(podeliEnv);
+
+      const payment = await createPodeliOrder(order, podeliEnv);
+
+      persistedOrder = {
+        ...order,
+        paymentId: order.orderId,
+        paymentUrl: payment.paymentUrl,
+        status: 'pending',
+        paymentDetails: {
+          gateway: 'podeli',
           initRequest: payment.requestPayload,
           initResponse: payment.raw,
         },
@@ -700,6 +766,65 @@ app.post(
     }
   },
 );
+
+app.post('/api/payments/podeli/webhook', async (request, response) => {
+  try {
+    assertPodeliConfigured(podeliEnv);
+
+    if (!validatePodeliWebhookToken(request.query.token, podeliEnv)) {
+      response.status(403).json({ error: 'Неверный токен webhook Подели.' });
+      return;
+    }
+
+    const webhook = normalizePodeliWebhook(request.body);
+
+    if (!webhook.orderId) {
+      response.status(400).json({ error: 'В webhook Подели не передан идентификатор заказа.' });
+      return;
+    }
+
+    const existingOrder = findOrder({ orderId: webhook.orderId });
+
+    if (!existingOrder || existingOrder.paymentProvider !== 'podeli') {
+      response.status(404).json({ error: 'Заказ для webhook Подели не найден.' });
+      return;
+    }
+
+    // Подели не подписывает уведомления, поэтому статус перепроверяем запросом к API.
+    const podeliOrder = await getPodeliOrderInfo(existingOrder.orderId, podeliEnv);
+    let podeliStatus = extractPodeliOrderStatus(podeliOrder) || webhook.status;
+
+    if (podeliStatus.toUpperCase() === 'WAIT_FOR_COMMIT' && podeliEnv.autoCommit) {
+      try {
+        await commitPodeliOrder(existingOrder.orderId, podeliEnv);
+        podeliStatus = 'COMMITTED';
+      } catch (commitError) {
+        console.error('Podeli commit failed:', commitError);
+      }
+    }
+
+    const finalizedOrder = await refreshOrderStatus(existingOrder, {
+      status: mapPodeliStatus(podeliStatus),
+      webhookReceivedAt: new Date().toISOString(),
+      paymentDetails: {
+        lastWebhook: webhook.raw,
+        lastStateResponse: podeliOrder,
+      },
+    });
+
+    console.log('[payment-webhook:podeli]', {
+      orderId: finalizedOrder.orderId,
+      status: finalizedOrder.status,
+    });
+
+    response.json({ status: 'success' });
+  } catch (error) {
+    console.error('Podeli webhook processing failed:', error);
+    response.status(500).json({
+      error: error instanceof Error ? error.message : 'Не удалось обработать webhook Подели.',
+    });
+  }
+});
 
 hydrateOrders().then(() => {
   console.log(`Hydrated ${ordersByOrderId.size} orders from storage.`);
