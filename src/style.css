@@ -992,13 +992,32 @@ p {
 
 .provider-chip {
   width: 100%;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
   padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid rgba(31, 41, 55, 0.15);
   background: rgba(255, 255, 255, 0.22);
   color: var(--charcoal);
   text-align: left;
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
+}
+
+.provider-chip:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(31, 41, 55, 0.34);
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.1);
+}
+
+.provider-chip__copy {
+  min-width: 0;
 }
 
 .provider-chip strong,
@@ -1008,12 +1027,53 @@ p {
 
 .provider-chip small {
   color: rgba(31, 41, 55, 0.65);
+  line-height: 1.35;
+}
+
+.provider-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border: 1px solid rgba(31, 41, 55, 0.08);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(31, 41, 55, 0.1);
+}
+
+.provider-icon svg {
+  width: 31px;
+  height: 31px;
+}
+
+.provider-icon--yandex-split {
+  background: #fff;
+}
+
+.provider-icon--podeli {
+  background: #fff;
+}
+
+.provider-icon--podeli svg {
+  width: 27px;
+  height: 38px;
+}
+
+.provider-icon--inpocket {
+  background: #191c1a;
+}
+
+.provider-icon--fallback {
+  color: var(--charcoal);
+  background: var(--champagne);
 }
 
 .provider-chip--active {
   border-color: rgba(17, 17, 17, 0.82);
   background: rgba(17, 17, 17, 0.95);
   color: var(--champagne);
+  box-shadow: 0 12px 28px rgba(17, 17, 17, 0.2);
 }
 
 .provider-chip--active small {

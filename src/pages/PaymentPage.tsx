@@ -2,6 +2,7 @@ import { BadgeCheck, CreditCard, Mail, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHero } from '../components/PageHero';
+import { PaymentProviderIcon } from '../components/PaymentProviderIcon';
 import { Reveal } from '../components/Reveal';
 import { Seo } from '../components/Seo';
 import { SectionEyebrow } from '../components/SectionHeading';
@@ -317,8 +318,13 @@ export function PaymentPage() {
                           setForm((current) => ({ ...current, paymentProvider: provider.code }))
                         }
                       >
-                        <strong>{provider.name}</strong>
-                        <small>{isDisabled ? 'временно недоступно' : provider.methods.join(' / ')}</small>
+                        <PaymentProviderIcon code={provider.code} />
+                        <span className="provider-chip__copy">
+                          <strong>{provider.name}</strong>
+                          <small>
+                            {isDisabled ? 'временно недоступно' : provider.methods.join(' / ')}
+                          </small>
+                        </span>
                       </button>
                     );
                   })}
