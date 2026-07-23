@@ -1042,20 +1042,29 @@ p {
   box-shadow: 0 5px 14px rgba(31, 41, 55, 0.1);
 }
 
-.provider-icon svg {
+.provider-icon svg,
+.provider-icon img {
   width: 31px;
   height: 31px;
+  object-fit: contain;
 }
 
 .provider-icon--yandex-split {
+  border-radius: 50%;
   background: #fff;
+}
+
+.provider-icon--yandex-split img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .provider-icon--podeli {
   background: #fff;
 }
 
-.provider-icon--podeli svg {
+.provider-icon--podeli img {
   width: 27px;
   height: 38px;
 }
