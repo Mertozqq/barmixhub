@@ -1,6 +1,6 @@
 export function validateName(value: string) {
   const name = value.trim();
-  if (name.length < 2) return 'Введите имя не короче 2 символов.';
+  if (name.length <= 2) return 'Введите имя не короче 2 символов.';
   if (name.length > 60) return 'Имя не должно быть длиннее 60 символов.';
   return '';
 }

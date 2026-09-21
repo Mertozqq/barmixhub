@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ScrollToTop } from './components/ScrollToTop';
 import { AboutPage } from './pages/AboutPage';
@@ -12,6 +12,9 @@ import { PaymentResultPage } from './pages/PaymentResultPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 
 function AppRoutes() {
+  const { pathname } = useLocation();
+  if (pathname === '/mailing-consent') return null;
+
   return (
     <Layout>
       <Routes>

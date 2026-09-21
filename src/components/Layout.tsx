@@ -11,7 +11,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <SiteFooter />
       <a
         className="floating-cta"
-        href="https://app.barmenschool.site/login"
+        href="https://app.barmenschool123.site/login"
         target="_blank"
         rel="noreferrer noopener"
       >

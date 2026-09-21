@@ -43,7 +43,7 @@ export function SiteHeader() {
         <button
           type="button"
           className="menu-button"
-          onClick={() => setMenuOpen((current) => !current)}
+          onClick={() => setMenuOpen(true)}
           aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={menuOpen}
           aria-controls="site-nav"
@@ -55,7 +55,7 @@ export function SiteHeader() {
           {navLinks.map((item) => (
             <NavLink
               key={item.to}
-              to={item.to}
+              to={item.to === '/contact' ? '/about' : item.to}
               onClick={() => setMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? 'site-nav__link site-nav__link--active' : 'site-nav__link'

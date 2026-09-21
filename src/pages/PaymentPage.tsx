@@ -103,9 +103,7 @@ export function PaymentPage() {
       validateName(form.name) ||
       validatePhone(form.phone) ||
       validateEmail(form.email) ||
-      (!form.privacyAccepted ? 'Нужно подтвердить ознакомление с политикой конфиденциальности.' : '') ||
-      (!form.offerAccepted ? 'Нужно принять условия договора оферты.' : '') ||
-      (!form.consentsAccepted ? 'Нужно подтвердить все обязательные согласия.' : '');
+      (!allAgreementsAccepted ? 'Нужно подтвердить все обязательные согласия.' : '');
 
     if (validation) {
       setError(validation);
@@ -315,7 +313,7 @@ export function PaymentPage() {
                           .filter(Boolean)
                           .join(' ')}
                         onClick={() =>
-                          setForm((current) => ({ ...current, paymentProvider: provider.code }))
+                          setForm((current) => ({ ...current, paymentProvider: current.paymentProvider }))
                         }
                       >
                         <PaymentProviderIcon code={provider.code} />

@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev:local": "concurrently \"node server/local.js\" \"vite\"",
+    "start:local": "node server/local.js",
     "dev": "vite",
     "dev:server": "node --watch server/index.js",
     "dev:full": "concurrently \"npm run dev:server\" \"npm run dev\"",

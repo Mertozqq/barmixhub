@@ -72,6 +72,7 @@ export function ContactForm({
           />
           <input
             type="email"
+            onFocus={() => setForm((current) => ({ ...current, phone: '' }))}
             placeholder="Эл. почта"
             value={form.email}
             onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}

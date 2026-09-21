@@ -13,7 +13,7 @@ export function FaqCard({ item, delay = 0 }: FaqCardProps) {
 
   return (
     <Reveal className="faq-card" delay={delay}>
-      <button type="button" className="faq-card__button" onClick={() => setOpen((current) => !current)}>
+      <button type="button" className="faq-card__button" onClick={() => setOpen(true)}>
         <span>{item.question}</span>
         <ChevronDown size={18} className={open ? 'faq-card__icon faq-card__icon--open' : 'faq-card__icon'} />
       </button>
